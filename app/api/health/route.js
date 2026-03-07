@@ -1,5 +1,7 @@
-import { kv } from '@vercel/kv';
+import Redis from 'ioredis';
 import { NextResponse } from 'next/server';
+
+const redis = new Redis(process.env.REDIS_URL);
 
 export async function GET(request) {
   const authHeader = request.headers.get('Authorization');
@@ -7,7 +9,7 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const totalKeys = await kv.zcard('health:index');
+  const totalKeys = await redis.zcard('health:index');
 
   return NextResponse.json({
     status: 'ok',
