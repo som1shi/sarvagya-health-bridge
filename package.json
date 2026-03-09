@@ -8,6 +8,10 @@
   },
   "dependencies": {
     "next": "14",
-    "ioredis": "latest"
+    "react": "^18",
+    "react-dom": "^18",
+    "ioredis": "latest",
+    "react-body-highlighter": "^2.0.5",
+    "html2canvas": "^1.4.1"
   }
 }
