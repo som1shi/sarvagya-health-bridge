@@ -34,9 +34,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-    return NextResponse.json({ error: 'Missing or invalid date (expected YYYY-MM-DD)' }, { status: 400 });
+  if (!body.date) {
+    return NextResponse.json({ error: 'Missing date' }, { status: 400 });
   }
+
+  const date = String(body.date).slice(0, 10);
 
   // water_ml: if value ≤ 30 assume litres, convert to ml
   const rawWater = body.water_ml != null ? Number(body.water_ml) : null;
@@ -48,7 +50,7 @@ export async function POST(request) {
 
   const payload = {
     source: 'apple_shortcuts',
-    date: body.date,
+    date,
     ...(body.calories_kcal != null && { calories_kcal: Number(body.calories_kcal) }),
     ...(body.carbs_g       != null && { carbs_g:       Number(body.carbs_g) }),
     ...(body.protein_g     != null && { protein_g:     Number(body.protein_g) }),

@@ -31,9 +31,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-    return NextResponse.json({ error: 'Missing or invalid date (expected YYYY-MM-DD)' }, { status: 400 });
+  if (!body.date) {
+    return NextResponse.json({ error: 'Missing date' }, { status: 400 });
   }
+
+  const date = String(body.date).slice(0, 10);
 
   // Resolve weight: prefer weight_kg, fall back to weight_lbs converted, or detect unit
   let weightKg = body.weight_kg != null ? Number(body.weight_kg) : null;
@@ -47,7 +49,7 @@ export async function POST(request) {
 
   const payload = {
     source: 'apple_shortcuts',
-    date: body.date,
+    date,
     ...(weightKg          != null && { weight_kg:    weightKg }),
     ...(body.bmi          != null && { bmi:          Number(body.bmi) }),
     ...(body.body_fat_pct != null && { body_fat_pct: Number(body.body_fat_pct) }),

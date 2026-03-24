@@ -35,13 +35,15 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-    return NextResponse.json({ error: 'Missing or invalid date (expected YYYY-MM-DD)' }, { status: 400 });
+  if (!body.date) {
+    return NextResponse.json({ error: 'Missing date' }, { status: 400 });
   }
+
+  const date = String(body.date).slice(0, 10);
 
   const payload = {
     source: 'apple_shortcuts',
-    date: body.date,
+    date,
     ...(body.resting_hr       != null && { resting_hr:       Number(body.resting_hr) }),
     // accept both hrv_sdnn and legacy hrv alias
     ...(body.hrv_sdnn         != null && { hrv_sdnn:         Number(body.hrv_sdnn) }),

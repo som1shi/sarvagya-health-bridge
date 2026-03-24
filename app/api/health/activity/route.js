@@ -28,19 +28,22 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  if (!body.date || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-    return NextResponse.json({ error: 'Missing or invalid date (expected YYYY-MM-DD)' }, { status: 400 });
+  if (!body.date) {
+    return NextResponse.json({ error: 'Missing date' }, { status: 400 });
   }
+
+  // Expect plain YYYY-MM-DD formatted in local time from Shortcuts
+  const date = String(body.date).slice(0, 10);
 
   const payload = {
     source: 'apple_shortcuts',
-    date: body.date,
-    ...(body.steps            != null && { steps:            Number(body.steps) }),
-    ...(body.active_calories  != null && { active_calories:  Number(body.active_calories) }),
-    ...(body.exercise_min     != null && { exercise_min:     Number(body.exercise_min) }),
-    ...(body.stand_hours      != null && { stand_hours:      Number(body.stand_hours) }),
-    ...(body.distance_km      != null && { distance_km:      Number(body.distance_km) }),
-    ...(body.floors_climbed   != null && { floors_climbed:   Number(body.floors_climbed) }),
+    date,
+    ...(body.steps           != null && { steps:           Number(body.steps) }),
+    ...(body.active_calories != null && { active_calories: Number(body.active_calories) }),
+    ...(body.exercise_min    != null && { exercise_min:    Number(body.exercise_min) }),
+    ...(body.stand_minutes   != null && { stand_minutes:   Number(body.stand_minutes) }),
+    ...(body.distance_km     != null && { distance_km:     Number(body.distance_km) }),
+    ...(body.floors_climbed  != null && { floors_climbed:  Number(body.floors_climbed) }),
   };
 
   const now = new Date();
