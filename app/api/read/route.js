@@ -34,5 +34,13 @@ export async function GET(request) {
   const timestamps = keys.map(k => parseInt(k.split(':')[2]));
   const latestTimestamp = Math.max(...timestamps);
 
+  // ── DELETE AFTER READ ─────────────────
+  // Data is now consumed and will be stored in the desktop app's SQLite DB.
+  // No reason to keep it in Redis — delete the keys and remove from the index.
+  if (keys.length > 0) {
+    await redis.del(...keys);
+    await redis.zrem('health:index', ...keys);
+  }
+
   return NextResponse.json({ payloads, count: payloads.length, latestTimestamp });
 }
