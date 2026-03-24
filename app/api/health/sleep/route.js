@@ -42,21 +42,36 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const hasSegments = Array.isArray(body.segments) && body.segments.length > 0;
-  const hasDate = body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date);
+  // Normalise segments: accept a proper JSON array OR a newline-delimited string
+  // of JSON objects (what Apple Shortcuts produces when you join items as text)
+  let segments = null;
+  if (Array.isArray(body.segments)) {
+    segments = body.segments;
+  } else if (typeof body.segments === 'string' && body.segments.trim()) {
+    segments = body.segments
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => { try { return JSON.parse(line); } catch { return null; } })
+      .filter(Boolean);
+  }
+
+  const hasSegments = segments && segments.length > 0;
+  const hasDate = body.date;
 
   if (!hasSegments && !hasDate) {
     return NextResponse.json(
-      { error: 'Provide either `segments` array or a `date` (YYYY-MM-DD) with flat fields' },
+      { error: 'Provide either `segments` or a `date` with flat fields' },
       { status: 400 },
     );
   }
 
+  const date = hasDate ? String(body.date).slice(0, 10) : undefined;
+
   const payload = {
     source: 'apple_shortcuts',
-    // date is optional when segments are provided (parser infers it from wake-up time)
-    ...(hasDate && { date: body.date }),
-    ...(hasSegments && { sleep_segments: body.segments }),
+    ...(date && { date }),
+    ...(hasSegments && { sleep_segments: segments }),
     // flat summary fields (used when no segments are present)
     ...(body.sleep_total_min        != null && { sleep_total_min:        Number(body.sleep_total_min) }),
     ...(body.sleep_asleep_min       != null && { sleep_asleep_min:       Number(body.sleep_asleep_min) }),
@@ -72,7 +87,8 @@ export async function POST(request) {
 
   const now = new Date();
   const timestampKey = now.getTime();
-  const storageKey = `health:${body.date}:${timestampKey}`;
+  const dateForKey = date ?? now.toISOString().slice(0, 10);
+  const storageKey = `health:${dateForKey}:${timestampKey}`;
 
   await redis.set(storageKey, JSON.stringify(payload), 'EX', 60 * 60 * 24 * 7);
   await redis.zadd('health:index', timestampKey, storageKey);
